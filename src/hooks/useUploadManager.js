@@ -76,6 +76,7 @@ const loadPersistedFiles = () => {
 export const useUploadManager = () => {
   const [initialLoad] = useState(loadPersistedFiles);
   const [files, setFiles] = useState(initialLoad.files);
+  const [cancelledCountTotal, setCancelledCountTotal] = useState(0);
   const queueRef = useRef(new ConcurrencyQueue(3));
   const filesRef = useRef(initialLoad.files);
 
@@ -237,11 +238,9 @@ export const useUploadManager = () => {
     const item = filesRef.current.find((entry) => entry.id === id);
     if (!item) return;
 
-    updateFile(id, {
-      status: STATUS.CANCELLED,
-      error: 'Upload cancelled',
-    });
     item.controller?.abort();
+    setFiles((prev) => prev.filter((entry) => entry.id !== id));
+    setCancelledCountTotal((prev) => prev + 1);
   };
 
   const summary = useMemo(() => {
@@ -250,7 +249,8 @@ export const useUploadManager = () => {
     const uploadingCount = files.filter((f) => f.status === STATUS.UPLOADING).length;
     const successCount = files.filter((f) => f.status === STATUS.SUCCESS).length;
     const errorCount = files.filter((f) => f.status === STATUS.ERROR).length;
-    const cancelledCount = files.filter((f) => f.status === STATUS.CANCELLED).length;
+    const cancelledCountInList = files.filter((f) => f.status === STATUS.CANCELLED).length;
+    const cancelledCount = cancelledCountInList + cancelledCountTotal;
     const retryingCount = files.filter((f) => f.status === STATUS.RETRYING).length;
     const interruptedCount = files.filter((f) => f.status === STATUS.INTERRUPTED).length;
 
@@ -279,7 +279,7 @@ export const useUploadManager = () => {
       allComplete,
       allFailed,
     };
-  }, [files]);
+  }, [files, cancelledCountTotal]);
 
   return { files, addFiles, retry, cancel, summary };
 };
