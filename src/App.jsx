@@ -1,5 +1,5 @@
 import { Toaster } from 'react-hot-toast'
-import FileUploader from './components/fileUploader'
+import FileUploader from './components/FileUploader'
 
 function App() {
   return (
