@@ -51,6 +51,11 @@ function ProgressBar({ progress, visible }) {
       className={`h-2 w-full overflow-hidden rounded-full bg-gray-100 ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
+      role="progressbar"
+      aria-label="File upload progress"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={progress}
       aria-hidden={!visible}
     >
       <div
@@ -64,16 +69,17 @@ function ProgressBar({ progress, visible }) {
 function StatusActions({ file, onRetry, onCancel }) {
   const { status, error } = file
 
-  if (status === STATUS.UPLOADING) {
+  if (status === STATUS.UPLOADING || status === STATUS.RETRYING) {
     return (
       <div className="flex min-w-[88px] flex-col items-end gap-2">
         <div className="flex items-center gap-1.5 text-sm text-violet-600">
           <SpinnerIcon />
-          <span>Uploading…</span>
+          <span>{status === STATUS.RETRYING ? 'Retrying…' : 'Uploading…'}</span>
         </div>
         <button
           type="button"
           onClick={onCancel}
+          aria-label={`Cancel upload for ${file.file?.name ?? file.name ?? 'file'}`}
           className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
         >
           Cancel
@@ -103,6 +109,7 @@ function StatusActions({ file, onRetry, onCancel }) {
         <button
           type="button"
           onClick={onRetry}
+          aria-label={`Retry upload for ${file.file?.name ?? file.name ?? 'file'}`}
           className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
         >
           Retry
@@ -111,15 +118,45 @@ function StatusActions({ file, onRetry, onCancel }) {
     )
   }
 
+  if (status === STATUS.CANCELLED) {
+    return (
+      <div className="flex min-w-[88px] flex-col items-end gap-2">
+        <span className="text-sm font-medium text-amber-600">Cancelled</span>
+        <button
+          type="button"
+          onClick={onRetry}
+          aria-label={`Retry upload for ${file.file?.name ?? file.name ?? 'file'}`}
+          className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  if (status === STATUS.INTERRUPTED) {
+    return (
+      <div className="flex min-w-[88px] flex-col items-end gap-1">
+        <span className="text-sm font-medium text-orange-600">Interrupted</span>
+        <span className="max-w-[140px] text-right text-xs text-orange-500">
+          Refresh interrupted this upload
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-w-[88px] items-center justify-end">
-      <span className="text-sm text-gray-400">Queued…</span>
+      <span className="text-sm text-gray-400">Queued</span>
     </div>
   )
 }
 
 export default function FileItem({ file, onRetry, onCancel }) {
-  const isUploading = file.status === STATUS.UPLOADING
+  const isUploading =
+    file.status === STATUS.UPLOADING || file.status === STATUS.RETRYING
+  const fileName = file.file?.name ?? file.name ?? 'Unknown file'
+  const fileSize = file.file?.size ?? file.size ?? 0
 
   return (
     <li className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 shadow-sm">
@@ -127,12 +164,12 @@ export default function FileItem({ file, onRetry, onCancel }) {
         <div className="min-w-0">
           <p
             className="truncate font-medium text-gray-900"
-            title={file.file.name}
+            title={fileName}
           >
-            {file.file.name}
+            {fileName}
           </p>
           <p className="mt-0.5 text-sm text-gray-500">
-            {formatFileSize(file.file.size)}
+            {formatFileSize(fileSize)}
           </p>
         </div>
 

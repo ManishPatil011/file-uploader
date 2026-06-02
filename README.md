@@ -1,6 +1,6 @@
 # File Uploader
 
-A React app for uploading multiple files with live progress, concurrent uploads (up to 3 at a time), cancel, retry, and toast notifications.
+A React app for uploading multiple files with live progress, queue-aware concurrency (up to 3 at a time), cancel/retry support, validation, persistence-aware recovery, and toast notifications.
 
 ## Live Application
 
@@ -54,17 +54,21 @@ You can upload multiple files in one go. New batches can be added anytime; uploa
 
 ### While files upload
 
-Each file appears as a row in the list below the upload area:
+Each file appears as a row in the list below the upload area with explicit lifecycle states:
 
 - **Name and size** on the left
 - **Progress bar and percentage** in the middle (only while uploading)
-- **Status** on the right
+- **Status** on the right (`queued`, `retrying`, `uploading`, `success`, `error`, `cancelled`, `interrupted`)
 
-Up to **three files upload at the same time**. Extra files wait in the queue and start automatically when a slot is free.
+Up to **three files upload at the same time**. Extra files stay in a visible **Queued** state and start automatically when a slot is free.
+You also get a **global summary panel** with:
+- `uploading/total` count
+- overall progress bar
+- queued/success/failed/cancelled/interrupted counters
 
 ### Cancel an upload
 
-If a file is **Uploading…**, click **Cancel** on that row. The upload stops. No error toast is shown for a manual cancel.
+If a file is **Uploading…** (or **Retrying…**), click **Cancel** on that row. The upload switches immediately to **Cancelled**.
 
 ### If an upload fails
 
@@ -75,6 +79,24 @@ When a file fails:
 - The row shows **Failed** and a short error message
 - A toast appears: `Failed to upload {filename} — {error message}`
 - Click **Retry** on that row to try again
+
+### Validation & duplicate handling
+
+Before enqueueing files, the app validates:
+
+- non-empty files only
+- max file size: **500MB**
+- allowed types: `image/*`, `video/*`, `audio/*`, `application/pdf`, `text/plain`
+- duplicate detection (existing uploads and within the selected batch)
+
+Rejected files are skipped with toast feedback.
+
+### Refresh behavior (persistence)
+
+- Upload history metadata is persisted in local storage.
+- On refresh, previously active uploads (`queued/uploading/retrying`) are restored as **Interrupted**.
+- Completed/error/cancelled rows are retained as history.
+- Interrupted rows cannot be retried without re-selecting the source file (browser file handles do not survive refresh).
 
 ### When an upload succeeds
 
@@ -126,7 +148,7 @@ This layer is purely presentational and delegates all business logic to hooks.
 
 **5. User Feedback**
 
-* Each file displays real-time status: idle, queued, uploading, success, or error.
+* Each file displays real-time status: queued, retrying, uploading, success, error, cancelled, or interrupted.
 * Toast notifications are triggered from the upload manager to inform users of success and failure events.
 
 **6. Key Design Considerations**

@@ -1,7 +1,10 @@
 export const STATUS = {
-    IDLE: 'idle',
-    QUEUED: 'queued',
-    UPLOADING: 'uploading',
-    SUCCESS: 'success',
-    ERROR: 'error',
-  };
+  IDLE: 'idle',
+  QUEUED: 'queued',
+  RETRYING: 'retrying',
+  UPLOADING: 'uploading',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  CANCELLED: 'cancelled',
+  INTERRUPTED: 'interrupted',
+};
