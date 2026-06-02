@@ -2,6 +2,12 @@
 
 A React app for uploading multiple files with live progress, concurrent uploads (up to 3 at a time), cancel, retry, and toast notifications.
 
+## Live Application
+
+You can access the deployed application here:
+
+https://file-uploader-omega-ten.vercel.app/
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or newer recommended)
